@@ -8,9 +8,7 @@ ENV ZSH_SH_PATH 'zsh.sh'
 ENV ZSH /root/.oh-my-zsh
 ENV IS_DOCKER docker
 
-RUN sed -i s@/archive.ubuntu.com/@/mirrors.aliyun.com/@g /etc/apt/sources.list \
-    && apt-get clean \
-    && apt-get update \
+RUN apt-get update \
     && apt-get install zsh git curl wget dpkg vim -y \
     && chsh -s $(which zsh)
 
