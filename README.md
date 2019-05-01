@@ -3,9 +3,9 @@
 > by a lazy man @gunjianpan
 
 - When you login a new servicer or use new docker container,
-- Do you feel **depressed**🙉, because of the waxy interface?
+- Do you feel **depressed**🙉, because of the write code interface?
 - Do you feel **manic**😡, because there are no coding suggestion?
-- Do you feel **tired**😷, because you have to use so many service that you can't deploy zsh every service.
+- Do you feel **tired**😷, because you have to use so many service that you can't deploy zsh env every service.
 
 **Now**, Everything you can use **zsh.sh** to solve this problem.
 
