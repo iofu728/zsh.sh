@@ -67,14 +67,16 @@ docker exec -it zsh_centos /bin/zsh
 vim +'PlugInstall --sync' +qall &> /dev/null < /dev/tty
 ```
 
-![image](https://cdn.nlark.com/yuque/0/2019/gif/104214/1556732721406-9e47831f-b6a0-406d-b9f5-813d89233a01.gif)
-
 ![image](https://cdn.nlark.com/yuque/0/2019/png/104214/1556732743655-597b39cb-d38d-4431-a4a2-776f029af6ca.png)
 
 ## Document
 
-- [zhihu](https://zhuanlan.zhihu.com/p/53380250)
-- [blog](https://wyydsb.xin/other/terminal.html)
+- 如何给码农 👨‍💻‍ 的 Mac 开光
+  - [zhihu](https://zhuanlan.zhihu.com/p/53380250)
+  - [blog](https://wyydsb.xin/other/terminal.html)
+- Linux 流水式开光神器 zsh.sh
+  - [zhihu](https://zhuanlan.zhihu.com/p/64444982)
+  - [blog](https://wyydsb.xin/other/zshsh.html)
 
 ## QA
 
