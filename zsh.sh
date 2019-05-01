@@ -24,7 +24,7 @@ VIM_URL='https://github.com/amix/vimrc'
 VIMRC=${ZDOTDIR:-$HOME}/.vimrc
 VIMPLUG_URL='https://raw.github.com/junegunn/vim-plug/master/plug.vim'
 VIMPLUG_P=${ZDOTDIR:-$HOME}'/.vim/autoload/plug.vim'
-VIMRC_URL='https://raw.github.com/iofu728/zsh.sh/master/deploy/.vimrc'
+VIMRC_URL='https://raw.github.com/iofu728/zsh.sh/master/.vimrc'
 
 BASH_SHELL='bash zsh.sh'
 SOURCE_SH='source ${ZDOTDIR:-$HOME}/.zshrc'
