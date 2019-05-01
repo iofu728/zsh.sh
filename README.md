@@ -40,9 +40,36 @@ bash zsh.sh && source ${ZDOTDIR:-$HOME}/.zshrc
 
 **Notice**: Docker version need execute `vim +'PlugInstall --sync' +qall &> /dev/null < /dev/tty` after docker exec to ima, if you want to use vim plug function。
 
-```bash
+- Ubuntu:18.04
 
+```bash
+docker pull gunjianpan/zsh.sh.ubuntu
+docker run -it -d --name zsh_ubuntu gunjianpan/zsh.sh.ubuntu
+docker exec -it zsh_ubuntu /bin/zsh
+vim +'PlugInstall --sync' +qall &> /dev/null < /dev/tty
 ```
+
+- Ubuntu32:16.04
+
+```bash
+docker pull gunjianpan/zsh.sh.ubuntu32
+docker run -it -d --name zsh_ubuntu32 gunjianpan/zsh.sh.ubuntu32
+docker exec -it zsh_ubuntu32 /bin/zsh
+vim +'PlugInstall --sync' +qall &> /dev/null < /dev/tty
+```
+
+- CentOS:7
+
+```bash
+docker pull gunjianpan/zsh.sh.centos
+docker run -it -d --name zsh_centos gunjianpan/zsh.sh.centos
+docker exec -it zsh_centos /bin/zsh
+vim +'PlugInstall --sync' +qall &> /dev/null < /dev/tty
+```
+
+![image](https://cdn.nlark.com/yuque/0/2019/gif/104214/1556732721406-9e47831f-b6a0-406d-b9f5-813d89233a01.gif)
+
+![image](https://cdn.nlark.com/yuque/0/2019/png/104214/1556732743655-597b39cb-d38d-4431-a4a2-776f029af6ca.png)
 
 ## Document
 
