@@ -3,7 +3,7 @@ FROM centos:7
 LABEL maintaine gunjianpan '<iofu728@163.com>'
 
 ENV OH_MY_ZSH_URL 'https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh'
-ENV ZSH_LINUX_URL 'https://raw.github.com/iofu728/Model_retrieval/develop/deploy/zsh_ubuntu.sh'
+ENV ZSH_LINUX_URL 'https://raw.github.com/iofu728/zsh.sh/master/deploy/zsh.sh'
 ENV ZSH_SH_PATH 'zsh.sh'
 ENV ZSH /root/.oh-my-zsh
 ENV IS_DOCKER docker
