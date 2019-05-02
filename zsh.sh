@@ -154,7 +154,7 @@ else
     # install fzf & bind default key-binding
     if [ -z "$(ls -a ${ZDOTDIR:-$HOME} | sed -n '/\.fzf/p')" ]; then
         if [ ! -z "$(echo $DISTRIBUTION | sed -n '/CentOS/p')" ]; then
-            if [ -z "$(which dpkg | sed -n '/\/dpkg/p')" ]; then
+            if [ -z "$(which dpkg 2>/dev/null | sed -n '/\/dpkg/p')" ]; then
                 echo_color yellow "${SIGN_2} ${INS} dpkg ${SIGN_2}"
                 yum epel-release -y && yum repolist && yum install dpkg-devel dpkg-dev -y
             fi
@@ -169,6 +169,10 @@ else
                 echo_color yellow "${SIGN_2} ${INS} ${GLIBC} ${SIGN_2}"
                 mkdir build && cd build && bash ../configure --prefix=/usr
                 make -j4 >/dev/null && make install >/dev/null
+            fi
+        elif [ ! -z "$(echo $DISTRIBUTION | sed -n '/Ubuntu/p')" ]; then
+            if [ -z "$(which dpkg | sed -n '/\/dpkg/p')" ]; then
+                apt-get install dpkg -y
             fi
         fi
 
