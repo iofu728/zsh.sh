@@ -16,6 +16,8 @@ This shell include
 - fzf, fd
 - vimrc
 
+<img src="https://cdn.nlark.com/yuque/0/2019/gif/104214/1556771802339-d084eb70-90d0-438f-925c-50aace8a535e.gif">
+
 ## Support Linux Distribution
 
 Now: support **Ubuntu** + **CentOS** + **MacOS**(I can't find a test machine, hhh, maybe have some bugs.)
@@ -66,8 +68,6 @@ docker run -it -d --name zsh_centos gunjianpan/zsh.sh.centos
 docker exec -it zsh_centos /bin/zsh
 vim +'PlugInstall --sync' +qall &> /dev/null < /dev/tty
 ```
-
-![image](https://cdn.nlark.com/yuque/0/2019/png/104214/1556732743655-597b39cb-d38d-4431-a4a2-776f029af6ca.png)
 
 ## Document
 
