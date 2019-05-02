@@ -16,7 +16,7 @@ This shell include
 - fzf, fd
 - vimrc
 
-<img src='https://cdn.nlark.com/yuque/0/2019/gif/104214/1556771802339-d084eb70-90d0-438f-925c-50aace8a535e.gif'>
+<img src="https://raw.githubusercontent.com/iofu728/zsh.sh/master/demo.gif">
 
 ## Support Linux Distribution
 
