@@ -45,8 +45,8 @@ bash zsh.sh && source ${ZDOTDIR:-$HOME}/.zshrc
 - Ubuntu:18.04
 
 ```bash
-docker pull gunjianpan/zsh.sh.ubuntu
-docker run -it -d --name zsh_ubuntu gunjianpan/zsh.sh.ubuntu
+docker pull iofu728/zsh.sh.ubuntu
+docker run -it -d --name zsh_ubuntu iofu728/zsh.sh.ubuntu
 docker exec -it zsh_ubuntu /bin/zsh
 vim +'PlugInstall --sync' +qall &> /dev/null < /dev/tty
 ```
@@ -54,8 +54,8 @@ vim +'PlugInstall --sync' +qall &> /dev/null < /dev/tty
 - Ubuntu32:16.04
 
 ```bash
-docker pull gunjianpan/zsh.sh.ubuntu32
-docker run -it -d --name zsh_ubuntu32 gunjianpan/zsh.sh.ubuntu32
+docker pull iofu728/zsh.sh.ubuntu32
+docker run -it -d --name zsh_ubuntu32 iofu728/zsh.sh.ubuntu32
 docker exec -it zsh_ubuntu32 /bin/zsh
 vim +'PlugInstall --sync' +qall &> /dev/null < /dev/tty
 ```
@@ -63,8 +63,8 @@ vim +'PlugInstall --sync' +qall &> /dev/null < /dev/tty
 - CentOS:7
 
 ```bash
-docker pull gunjianpan/zsh.sh.centos
-docker run -it -d --name zsh_centos gunjianpan/zsh.sh.centos
+docker pull iofu728/zsh.sh.centos
+docker run -it -d --name zsh_centos iofu728/zsh.sh.centos
 docker exec -it zsh_centos /bin/zsh
 vim +'PlugInstall --sync' +qall &> /dev/null < /dev/tty
 ```
