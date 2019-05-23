@@ -1,7 +1,7 @@
 #!/bin/bash
 # @Author: gunjianpan
 # @Date:   2019-04-30 13:26:25
-# @Last Modified time: 2019-05-23 14:51:03
+# @Last Modified time: 2019-05-23 15:25:00
 # A zsh deploy shell for ubuntu.
 # In this shell, will install zsh, oh-my-zsh, zsh-syntax-highlighting, zsh-autosuggestions, fzf, vimrc
 
@@ -60,7 +60,7 @@ if [ -z $DISTRIBUTION ]; then
 fi
 
 if [ ! -z "$(echo $DISTRIBUTION | sed -n '/Ubuntu/p')" ]; then
-    (( $+commands[apt] )) && APT=apt || APT=apt-get
+    APT=apt || APT=apt-get
     if [ ! -z "$(which sudo | sed -n '/\/sudo/p')" ]; then
         alias ag="sudo ${APT}"
     else
