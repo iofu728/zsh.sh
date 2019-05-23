@@ -112,3 +112,5 @@ vim +'PlugInstall --sync' +qall &> /dev/null < /dev/tty
 >
 > A: the Internet of github filesystem is maybe block. so In my script, the script is support multi-run.
 > You can block the script and rerun the script.
+> If you find you block in download fd or run fzf find show `ERROR 502: Bad Gateway.`, or `(eval):1 command not found:fd`,
+> you should rerun `bash zsh.sh && source ${ZDOTDIR:-$HOME}/.zshrc`
