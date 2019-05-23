@@ -1,7 +1,7 @@
 #!/bin/bash
 # @Author: gunjianpan
 # @Date:   2019-04-30 13:26:25
-# @Last Modified time: 2019-05-01 02:03:39
+# @Last Modified time: 2019-05-23 16:33:33
 # A zsh deploy shell for ubuntu.
 # In this shell, will install zsh, oh-my-zsh, zsh-syntax-highlighting, zsh-autosuggestions, fzf, vimrc
 
@@ -59,6 +59,15 @@ if [ -z $DISTRIBUTION ]; then
     fi
 fi
 
+if [ ! -z "$(echo $DISTRIBUTION | sed -n '/Ubuntu/p')" ]; then
+    APT=apt || APT=apt-get
+    if [ ! -z "$(which sudo | sed -n '/\/sudo/p')" ]; then
+        ag="sudo ${APT}"
+    else
+        ag="${APT}"
+    fi
+fi
+
 # echo color
 RED='\033[1;91m'
 GREEN='\033[1;92m'
@@ -83,7 +92,7 @@ check_install() {
         echo_color green "${SIGN_1} ${INS} ${1} ${SIGN_1}"
         case $DISTRIBUTION in
         MacOS) brew install ${1} ;;
-        Ubuntu) apt-get install ${1} -y ;;
+        Ubuntu) $ag install ${1} -y ;;
         CentOS) yum install ${1} -y ;;
         *) echo_color red ${ERROR_MSG} && exit 2 ;;
         esac
@@ -111,7 +120,7 @@ update_list() {
             git remote set-url origin ${HOMEBREW_TUNA}homebrew-core.git
         fi
         ;;
-    Ubuntu) apt-get update -y && apt-get install dpkg ;;
+    Ubuntu) $ag update -y && $ag install dpkg ;;
     CentOS) yum update -y && yum install which -y ;;
     *) echo_color red ${ERROR_MSG} && exit 1 ;;
     esac
@@ -151,8 +160,7 @@ else
     *) sed -i 's/plugins=(git)/plugins=(git docker zsh-autosuggestions)/' ${ZSHRC} ;;
     esac
 
-    # install fzf & bind default key-binding
-    if [ -z "$(ls -a ${ZDOTDIR:-$HOME} | sed -n '/\.fzf/p')" ]; then
+    if [ -z "$(ls -a ${ZDOTDIR:-$HOME} | sed -n '/\fd/p')" ]; then
         if [ ! -z "$(echo $DISTRIBUTION | sed -n '/CentOS/p')" ]; then
             if [ -z "$(which dpkg 2>/dev/null | sed -n '/\/dpkg/p')" ]; then
                 echo_color yellow "${SIGN_2} ${INS} dpkg ${SIGN_2}"
@@ -172,14 +180,9 @@ else
             fi
         elif [ ! -z "$(echo $DISTRIBUTION | sed -n '/Ubuntu/p')" ]; then
             if [ -z "$(which dpkg | sed -n '/\/dpkg/p')" ]; then
-                apt-get install dpkg -y
+                $ag install dpkg -y
             fi
         fi
-
-        echo_color yellow "${SIGN_2} ${DOW} fzf ${SIGN_2}"
-        git clone --depth 1 https://github.com/junegunn/fzf ${FZF}
-        echo_color yellow "${SIGN_2} ${INS} fzf ${SIGN_2}"
-        bash ${FZF}/install <<<'yyy'
 
         # install fd, url from https://github.com/sharkdp/fd/releases
         echo_color yellow "${SIGN_2} ${DOW} fd ${SIGN_2}"
@@ -188,9 +191,23 @@ else
         *)
             BIT=$(dpkg --print-architecture)
             FD_P=fd_${FD_VERSION}_${BIT}.deb
-            cd ${ZDOTDIR:-$HOME} && wget ${FD_URL}${FD_P} && dpkg -i ${FD_P}
+            if [ ! -z "$(which sudo | sed -n '/\/sudo/p')" ]; then
+                sdpkg='sudo dpkg'
+            else
+                sdpkg='dpkg'
+            fi
+            cd ${ZDOTDIR:-$HOME} && rm -rf ${FD_P}* && wget ${FD_URL}${FD_P} && $sdpkg -i ${FD_P}
             ;;
         esac
+    fi
+
+    # install fzf & bind default key-binding
+    if [ -z "$(ls -a ${ZDOTDIR:-$HOME} | sed -n '/\.fzf/p')" ]; then
+
+        echo_color yellow "${SIGN_2} ${DOW} fzf ${SIGN_2}"
+        git clone --depth 1 https://github.com/junegunn/fzf ${FZF}
+        echo_color yellow "${SIGN_2} ${INS} fzf ${SIGN_2}"
+        bash ${FZF}/install <<<'yyy'
 
         # alter filefind to fd
         echo "export FZF_DEFAULT_COMMAND='fd --type file'" >>${ZSHRC}
@@ -204,7 +221,6 @@ else
         MacOS) sed -i '' 's/\\ec/^\\/' ${FZF}/shell/key-bindings.zsh ;;
         *) sed -i 's/\\ec/^\\/' ${FZF}/shell/key-bindings.zsh ;;
         esac
-
     fi
 
     # vimrc
