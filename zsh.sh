@@ -1,7 +1,7 @@
 #!/bin/bash
 # @Author: gunjianpan
 # @Date:   2019-04-30 13:26:25
-# @Last Modified time: 2019-05-23 16:20:54
+# @Last Modified time: 2019-05-23 16:33:33
 # A zsh deploy shell for ubuntu.
 # In this shell, will install zsh, oh-my-zsh, zsh-syntax-highlighting, zsh-autosuggestions, fzf, vimrc
 
@@ -196,7 +196,7 @@ else
             else
                 sdpkg='dpkg'
             fi
-            cd ${ZDOTDIR:-$HOME} && wget ${FD_URL}${FD_P} && $sdpkg -i ${FD_P}
+            cd ${ZDOTDIR:-$HOME} && rm -rf ${FD_P}* && wget ${FD_URL}${FD_P} && $sdpkg -i ${FD_P}
             ;;
         esac
     fi
@@ -221,7 +221,6 @@ else
         MacOS) sed -i '' 's/\\ec/^\\/' ${FZF}/shell/key-bindings.zsh ;;
         *) sed -i 's/\\ec/^\\/' ${FZF}/shell/key-bindings.zsh ;;
         esac
-
     fi
 
     # vimrc
