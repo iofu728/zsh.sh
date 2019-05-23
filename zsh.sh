@@ -1,7 +1,7 @@
 #!/bin/bash
 # @Author: gunjianpan
 # @Date:   2019-04-30 13:26:25
-# @Last Modified time: 2019-05-23 15:58:46
+# @Last Modified time: 2019-05-23 16:20:54
 # A zsh deploy shell for ubuntu.
 # In this shell, will install zsh, oh-my-zsh, zsh-syntax-highlighting, zsh-autosuggestions, fzf, vimrc
 
@@ -160,8 +160,7 @@ else
     *) sed -i 's/plugins=(git)/plugins=(git docker zsh-autosuggestions)/' ${ZSHRC} ;;
     esac
 
-    # install fzf & bind default key-binding
-    if [ -z "$(ls -a ${ZDOTDIR:-$HOME} | sed -n '/\.fzf/p')" ]; then
+    if [ -z "$(ls -a ${ZDOTDIR:-$HOME} | sed -n '/\fd/p')" ]; then
         if [ ! -z "$(echo $DISTRIBUTION | sed -n '/CentOS/p')" ]; then
             if [ -z "$(which dpkg 2>/dev/null | sed -n '/\/dpkg/p')" ]; then
                 echo_color yellow "${SIGN_2} ${INS} dpkg ${SIGN_2}"
@@ -185,11 +184,6 @@ else
             fi
         fi
 
-        echo_color yellow "${SIGN_2} ${DOW} fzf ${SIGN_2}"
-        git clone --depth 1 https://github.com/junegunn/fzf ${FZF}
-        echo_color yellow "${SIGN_2} ${INS} fzf ${SIGN_2}"
-        bash ${FZF}/install <<<'yyy'
-
         # install fd, url from https://github.com/sharkdp/fd/releases
         echo_color yellow "${SIGN_2} ${DOW} fd ${SIGN_2}"
         case $DISTRIBUTION in
@@ -205,6 +199,15 @@ else
             cd ${ZDOTDIR:-$HOME} && wget ${FD_URL}${FD_P} && $sdpkg -i ${FD_P}
             ;;
         esac
+    fi
+
+    # install fzf & bind default key-binding
+    if [ -z "$(ls -a ${ZDOTDIR:-$HOME} | sed -n '/\.fzf/p')" ]; then
+
+        echo_color yellow "${SIGN_2} ${DOW} fzf ${SIGN_2}"
+        git clone --depth 1 https://github.com/junegunn/fzf ${FZF}
+        echo_color yellow "${SIGN_2} ${INS} fzf ${SIGN_2}"
+        bash ${FZF}/install <<<'yyy'
 
         # alter filefind to fd
         echo "export FZF_DEFAULT_COMMAND='fd --type file'" >>${ZSHRC}
