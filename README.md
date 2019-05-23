@@ -106,3 +106,9 @@ vim +'PlugInstall --sync' +qall &> /dev/null < /dev/tty
 > A: In build progress, There are no /dev/tty can be used. I also explore to find a way reduce user operation.
 > In the same way, we also need user to execute `bash zsh.sh && source ${ZDOTDIR:-$HOME}/.zshrc` by twice.
 > It cause by `source` & `env` mechanism.
+>
+> 5.Q: When I run th shell script, I block in download fd, like
+> `fd_7.3.0_amd64.deb 58%[=================================================> ] 398.57K 4.93KB/s eta 47s`
+>
+> A: the Internet of github filesystem is maybe block. so In my script, the script is support multi-run.
+> You can block the script and rerun the script.
