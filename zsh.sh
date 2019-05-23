@@ -1,7 +1,7 @@
 #!/bin/bash
 # @Author: gunjianpan
 # @Date:   2019-04-30 13:26:25
-# @Last Modified time: 2019-05-23 15:51:23
+# @Last Modified time: 2019-05-23 15:58:46
 # A zsh deploy shell for ubuntu.
 # In this shell, will install zsh, oh-my-zsh, zsh-syntax-highlighting, zsh-autosuggestions, fzf, vimrc
 
@@ -200,7 +200,7 @@ else
             if [ ! -z "$(which sudo | sed -n '/\/sudo/p')" ]; then
                 sdpkg='sudo dpkg'
             else
-                sdpkg='dkpg'
+                sdpkg='dpkg'
             fi
             cd ${ZDOTDIR:-$HOME} && wget ${FD_URL}${FD_P} && $sdpkg -i ${FD_P}
             ;;
