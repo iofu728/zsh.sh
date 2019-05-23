@@ -1,7 +1,7 @@
 #!/bin/bash
 # @Author: gunjianpan
 # @Date:   2019-04-30 13:26:25
-# @Last Modified time: 2019-05-01 02:03:39
+# @Last Modified time: 2019-05-23 14:51:03
 # A zsh deploy shell for ubuntu.
 # In this shell, will install zsh, oh-my-zsh, zsh-syntax-highlighting, zsh-autosuggestions, fzf, vimrc
 
@@ -59,6 +59,15 @@ if [ -z $DISTRIBUTION ]; then
     fi
 fi
 
+if [ ! -z "$(echo $DISTRIBUTION | sed -n '/Ubuntu/p')" ]; then
+    (( $+commands[apt] )) && APT=apt || APT=apt-get
+    if [ ! -z "$(which sudo | sed -n '/\/sudo/p')" ]; then
+        alias ag="sudo ${APT}"
+    else
+        alias ag="${APT}" 
+    fi
+fi
+
 # echo color
 RED='\033[1;91m'
 GREEN='\033[1;92m'
@@ -83,7 +92,7 @@ check_install() {
         echo_color green "${SIGN_1} ${INS} ${1} ${SIGN_1}"
         case $DISTRIBUTION in
         MacOS) brew install ${1} ;;
-        Ubuntu) apt-get install ${1} -y ;;
+        Ubuntu) ag install ${1} -y ;;
         CentOS) yum install ${1} -y ;;
         *) echo_color red ${ERROR_MSG} && exit 2 ;;
         esac
@@ -111,7 +120,7 @@ update_list() {
             git remote set-url origin ${HOMEBREW_TUNA}homebrew-core.git
         fi
         ;;
-    Ubuntu) apt-get update -y && apt-get install dpkg ;;
+    Ubuntu) ag update -y && ag install dpkg ;;
     CentOS) yum update -y && yum install which -y ;;
     *) echo_color red ${ERROR_MSG} && exit 1 ;;
     esac
@@ -172,7 +181,7 @@ else
             fi
         elif [ ! -z "$(echo $DISTRIBUTION | sed -n '/Ubuntu/p')" ]; then
             if [ -z "$(which dpkg | sed -n '/\/dpkg/p')" ]; then
-                apt-get install dpkg -y
+                ag install dpkg -y
             fi
         fi
 
@@ -188,7 +197,11 @@ else
         *)
             BIT=$(dpkg --print-architecture)
             FD_P=fd_${FD_VERSION}_${BIT}.deb
-            cd ${ZDOTDIR:-$HOME} && wget ${FD_URL}${FD_P} && dpkg -i ${FD_P}
+            if [ ! -z "$(which sudo | sed -n '/\/sudo/p')" ]; then
+                alias sdpkg='sudo dpkg'
+            else
+                alias sdpkg='dkpg'  
+            cd ${ZDOTDIR:-$HOME} && wget ${FD_URL}${FD_P} && sdpkg -i ${FD_P}
             ;;
         esac
 
