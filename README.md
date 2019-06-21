@@ -20,11 +20,12 @@ This shell include
 
 ## Support Linux Distribution
 
-Now: support **Ubuntu** + **CentOS** + **MacOS**(I can't find a test machine, hhh, maybe have some bugs.)
+Now: support **Ubuntu** + **CentOS** + **Arch** + **Windows(a liitle)** + **MacOS**(I can't find a test machine, hhh, maybe have some bugs.)
 
 - Test in docker & host version, in AiliYun, TencentCloud and huaweicloud
 - Support amb64 & i386.
 - Support docker version for Ubuntu, CentOS, Ubuntu/32bit
+- Support WSL, Git Bash Windows
 
 ## Quick Start
 

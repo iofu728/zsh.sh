@@ -1,7 +1,7 @@
 #!/bin/bash
 # @Author: gunjianpan
 # @Date:   2019-04-30 13:26:25
-# @Last Modified time: 2019-05-23 16:33:33
+# @Last Modified time: 2019-06-21 14:34:36
 # A zsh deploy shell for ubuntu.
 # In this shell, will install zsh, oh-my-zsh, zsh-syntax-highlighting, zsh-autosuggestions, fzf, vimrc
 
@@ -56,6 +56,8 @@ if [ -z $DISTRIBUTION ]; then
         DISTRIBUTION=MacOS
     elif [ ! -z "$(which apt 2>/dev/null | sed -n '/\/apt/p')" ]; then
         DISTRIBUTION=Ubuntu
+    elif [ ! -z "$(which pacman 2>/dev/null | sed -n '/\/pacman/p')" ]; then
+        DISTRIBUTION=Arch
     fi
 fi
 
@@ -94,6 +96,7 @@ check_install() {
         MacOS) brew install ${1} ;;
         Ubuntu) $ag install ${1} -y ;;
         CentOS) yum install ${1} -y ;;
+        Arch) pacman -Sy ${1} --noconfirm ;;
         *) echo_color red ${ERROR_MSG} && exit 2 ;;
         esac
     fi
@@ -122,6 +125,7 @@ update_list() {
         ;;
     Ubuntu) $ag update -y && $ag install dpkg ;;
     CentOS) yum update -y && yum install which -y ;;
+    Arch) pacman -Syu --noconfirm ;;
     *) echo_color red ${ERROR_MSG} && exit 1 ;;
     esac
 }
@@ -132,7 +136,9 @@ if [ -z "$(ls -a ${ZDOTDIR:-$HOME} | sed -n '/\.oh-my-zsh/p')" ]; then
     check_install curl
     check_install git
     check_install vim
-    chsh -s $(which zsh)
+    if [ -z "$(echo $DISTRIBUTION | sed -n '/Arch/p')" ]; then
+        chsh -s $(which zsh)
+    fi
 
     echo_color yellow "${SIGN_1} ${INS} oh-my-zsh ${SIGN_1}"
     echo_color red "${SIGN_3} After Install you should ·${BASH_SH} && ${SOURCE_SH}· Again ${SIGN_3}"
@@ -188,6 +194,11 @@ else
         echo_color yellow "${SIGN_2} ${DOW} fd ${SIGN_2}"
         case $DISTRIBUTION in
         MacOS) check_install fd ;;
+        Arch)
+            if [ -z "$(which git | sed -n '/mingw64/p')" ]; then
+                pacman -S fd --noconfirm
+            fi
+            ;;
         *)
             BIT=$(dpkg --print-architecture)
             FD_P=fd_${FD_VERSION}_${BIT}.deb
