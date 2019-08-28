@@ -55,6 +55,7 @@ Plug 'junegunn/goyo.vim'
 Plug 'junegunn/seoul256.vim'
 Plug 'lervag/vimtex'
 Plug 'zxqfl/tabnine-vim'
+Plug 'mtdl9/vim-log-highlighting'
 
 call plug#end()
 
