@@ -1,7 +1,7 @@
 #!/bin/bash
 # @Author: gunjianpan
 # @Date:   2019-04-30 13:26:25
-# @Last Modified time: 2019-06-21 14:34:36
+# @Last Modified time: 2019-09-01 00:18:35
 # A zsh deploy shell for ubuntu.
 # In this shell, will install zsh, oh-my-zsh, zsh-syntax-highlighting, zsh-autosuggestions, fzf, vimrc
 
@@ -106,7 +106,9 @@ check_install() {
 update_list() {
     case $DISTRIBUTION in
     MacOS)
-        xcode-select --install
+        if [ -z "$(ls /Library/Developer/CommandLineTools 2>/dev/null)" ]; then
+            xcode-select --install
+        fi
         # Homebrew
         if [ -z "$(which brew | sed -n '/\/brew/p')" ]; then
             echo_color yellow "${SIGN_2} ${DOW} homebrew ${SIGN_2}"
