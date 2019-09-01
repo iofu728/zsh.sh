@@ -1,7 +1,7 @@
 #!/bin/bash
 # @Author: gunjianpan
 # @Date:   2019-04-30 13:26:25
-# @Last Modified time: 2019-09-01 00:18:35
+# @Last Modified time: 2019-09-01 13:18:34
 # A zsh deploy shell for ubuntu.
 # In this shell, will install zsh, oh-my-zsh, zsh-syntax-highlighting, zsh-autosuggestions, fzf, vimrc
 
@@ -124,6 +124,7 @@ update_list() {
             cd "$(brew --repo)/Library/Taps/homebrew/homebrew-core"
             git remote set-url origin ${HOMEBREW_TUNA}homebrew-core.git
         fi
+        check_install truncate
         ;;
     Ubuntu) $ag update -y && $ag install dpkg ;;
     CentOS) yum update -y && yum install which -y ;;
