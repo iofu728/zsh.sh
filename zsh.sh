@@ -1,14 +1,14 @@
 #!/bin/bash
 # @Author: gunjianpan
 # @Date:   2019-04-30 13:26:25
-# @Last Modified time: 2019-09-01 13:18:34
+# @Last Modified time: 2019-10-26 14:23:52
 # A zsh deploy shell for ubuntu.
 # In this shell, will install zsh, oh-my-zsh, zsh-syntax-highlighting, zsh-autosuggestions, fzf, vimrc
 
 set -e
 
 # some constant params
-FD_VERSION=7.3.0
+FD_VERSION=7.4.0
 ZSH_HL=zsh-syntax-highlighting
 ZSH_AS=zsh-autosuggestions
 ZSH_CUSTOM=${ZSH}/custom
