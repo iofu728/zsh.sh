@@ -1,14 +1,15 @@
 #!/bin/bash
 # @Author: gunjianpan
 # @Date:   2019-04-30 13:26:25
-# @Last Modified time: 2019-10-26 14:23:52
+# @Last Modified time: 2019-10-26 14:46:27
 # A zsh deploy shell for ubuntu.
-# In this shell, will install zsh, oh-my-zsh, zsh-syntax-highlighting, zsh-autosuggestions, fzf, vimrc
+# In this shell, will install zsh, oh-my-zsh, zsh-syntax-highlighting, zsh-autosuggestions, fzf, vimrc, bat
 
 set -e
 
 # some constant params
 FD_VERSION=7.4.0
+BAT_VERSION=0.12.1
 ZSH_HL=zsh-syntax-highlighting
 ZSH_AS=zsh-autosuggestions
 ZSH_CUSTOM=${ZSH}/custom
@@ -18,6 +19,7 @@ ZSH_AS_P=${ZSH_P}${ZSH_AS}
 ZSHRC=${ZDOTDIR:-$HOME}/.zshrc
 FZF=${ZDOTDIR:-$HOME}/.fzf
 FD_URL=https://github.com/sharkdp/fd/releases/download/v${FD_VERSION}/
+BAT_URL=https://github.com/sharkdp/bat/releases/download/v${BAT_VERSION}/
 
 VIM_P=${ZDOTDIR:-$HOME}/.vim_runtime
 VIM_URL='https://github.com/amix/vimrc'
@@ -103,6 +105,54 @@ check_install() {
 
 }
 
+install_dkpg() {
+    if [ -z "$(which ${1} 2>/dev/null | sed -n '/\/'${1}'/p')" ]; then
+        if [ ! -z "$(echo $DISTRIBUTION | sed -n '/CentOS/p')" ]; then
+            if [ -z "$(which dpkg 2>/dev/null | sed -n '/\/dpkg/p')" ]; then
+                echo_color yellow "${SIGN_2} ${INS} dpkg ${SIGN_2}"
+                yum epel-release -y && yum repolist && yum install dpkg-devel dpkg-dev -y
+            fi
+            if [ -z "$(strings /lib64/libc.so.6 | sed -n '/GLIBC_2.18/p')" ]; then
+                if [ -z "$(which gcc 2>/dev/null | sed -n '/\/gcc/p')" ]; then
+                    echo_color yellow "${SIGN_2} ${INS} gcc ${SIGN_2}"
+                    yum update -y && yum install gcc -y
+                fi
+                echo_color yellow "${SIGN_2} ${DOW} ${GLIBC} ${SIGN_2}"
+                cd ${ZDOTDIR:-$HOME} && wget ${GLIBC_URL}
+                tar -zxvf ${GLIBC_TAR} && cd ${GLIBC}
+                echo_color yellow "${SIGN_2} ${INS} ${GLIBC} ${SIGN_2}"
+                mkdir build && cd build && bash ../configure --prefix=/usr
+                make -j4 >/dev/null && make install >/dev/null
+            fi
+        elif [ ! -z "$(echo $DISTRIBUTION | sed -n '/Ubuntu/p')" ]; then
+            if [ -z "$(which dpkg | sed -n '/\/dpkg/p')" ]; then
+                $ag install dpkg -y
+            fi
+        fi
+
+        # install $1
+        echo_color yellow "${SIGN_2} ${DOW} ${1} ${SIGN_2}"
+        case $DISTRIBUTION in
+        MacOS) check_install ${1} ;;
+        Arch)
+            if [ -z "$(which git | sed -n '/mingw64/p')" ]; then
+                pacman -S ${1} --noconfirm
+            fi
+            ;;
+        *)
+            BIT=$(dpkg --print-architecture)
+            INSTALL_P=${1}_${2}_${BIT}.deb
+            if [ ! -z "$(which sudo | sed -n '/\/sudo/p')" ]; then
+                sdpkg='sudo dpkg'
+            else
+                sdpkg='dpkg'
+            fi
+            cd ${ZDOTDIR:-$HOME} && rm -rf ${INSTALL_P}* && wget ${3}${INSTALL_P} && $sdpkg -i ${INSTALL_P}
+            ;;
+        esac
+    fi
+}
+
 update_list() {
     case $DISTRIBUTION in
     MacOS)
@@ -169,51 +219,11 @@ else
     *) sed -i 's/plugins=(git)/plugins=(git docker zsh-autosuggestions)/' ${ZSHRC} ;;
     esac
 
-    if [ -z "$(ls -a ${ZDOTDIR:-$HOME} | sed -n '/\fd/p')" ]; then
-        if [ ! -z "$(echo $DISTRIBUTION | sed -n '/CentOS/p')" ]; then
-            if [ -z "$(which dpkg 2>/dev/null | sed -n '/\/dpkg/p')" ]; then
-                echo_color yellow "${SIGN_2} ${INS} dpkg ${SIGN_2}"
-                yum epel-release -y && yum repolist && yum install dpkg-devel dpkg-dev -y
-            fi
-            if [ -z "$(strings /lib64/libc.so.6 | sed -n '/GLIBC_2.18/p')" ]; then
-                if [ -z "$(which gcc 2>/dev/null | sed -n '/\/gcc/p')" ]; then
-                    echo_color yellow "${SIGN_2} ${INS} gcc ${SIGN_2}"
-                    yum update -y && yum install gcc -y
-                fi
-                echo_color yellow "${SIGN_2} ${DOW} ${GLIBC} ${SIGN_2}"
-                cd ${ZDOTDIR:-$HOME} && wget ${GLIBC_URL}
-                tar -zxvf ${GLIBC_TAR} && cd ${GLIBC}
-                echo_color yellow "${SIGN_2} ${INS} ${GLIBC} ${SIGN_2}"
-                mkdir build && cd build && bash ../configure --prefix=/usr
-                make -j4 >/dev/null && make install >/dev/null
-            fi
-        elif [ ! -z "$(echo $DISTRIBUTION | sed -n '/Ubuntu/p')" ]; then
-            if [ -z "$(which dpkg | sed -n '/\/dpkg/p')" ]; then
-                $ag install dpkg -y
-            fi
-        fi
+    # install fd, from https://github.com/sharkdp/fd
+    install_dkpg fd $FD_VERSION $FD_URL
 
-        # install fd, url from https://github.com/sharkdp/fd/releases
-        echo_color yellow "${SIGN_2} ${DOW} fd ${SIGN_2}"
-        case $DISTRIBUTION in
-        MacOS) check_install fd ;;
-        Arch)
-            if [ -z "$(which git | sed -n '/mingw64/p')" ]; then
-                pacman -S fd --noconfirm
-            fi
-            ;;
-        *)
-            BIT=$(dpkg --print-architecture)
-            FD_P=fd_${FD_VERSION}_${BIT}.deb
-            if [ ! -z "$(which sudo | sed -n '/\/sudo/p')" ]; then
-                sdpkg='sudo dpkg'
-            else
-                sdpkg='dpkg'
-            fi
-            cd ${ZDOTDIR:-$HOME} && rm -rf ${FD_P}* && wget ${FD_URL}${FD_P} && $sdpkg -i ${FD_P}
-            ;;
-        esac
-    fi
+    # install bat, from https://github.com/sharkdp/bat
+    install_dkpg bat $BAT_VERSION $BAT_URL
 
     # install fzf & bind default key-binding
     if [ -z "$(ls -a ${ZDOTDIR:-$HOME} | sed -n '/\.fzf/p')" ]; then
