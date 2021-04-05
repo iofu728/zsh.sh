@@ -1,15 +1,15 @@
 #!/bin/bash
 # @Author: gunjianpan
 # @Date:   2019-04-30 13:26:25
-# @Last Modified time: 2019-10-26 14:46:27
+# @Last Modified time: 2021-04-05 23:26:33
 # A zsh deploy shell for ubuntu.
 # In this shell, will install zsh, oh-my-zsh, zsh-syntax-highlighting, zsh-autosuggestions, fzf, vimrc, bat
 
 set -e
 
 # some constant params
-FD_VERSION=7.4.0
-BAT_VERSION=0.12.1
+FD_VERSION=8.2.1
+BAT_VERSION=0.18.0
 ZSH_HL=zsh-syntax-highlighting
 ZSH_AS=zsh-autosuggestions
 ZSH_CUSTOM=${ZSH}/custom
@@ -60,6 +60,8 @@ if [ -z $DISTRIBUTION ]; then
         DISTRIBUTION=Ubuntu
     elif [ ! -z "$(which pacman 2>/dev/null | sed -n '/\/pacman/p')" ]; then
         DISTRIBUTION=Arch
+    elif [ ! -z "$(which apk 2>/dev/null | sed -n '/\/apk/p')" ]; then
+        DISTRIBUTION=Alpine
     fi
 fi
 
@@ -99,6 +101,7 @@ check_install() {
         Ubuntu) $ag install ${1} -y ;;
         CentOS) yum install ${1} -y ;;
         Arch) pacman -Sy ${1} --noconfirm ;;
+        Alpine) apk add ${1} ;;
         *) echo_color red ${ERROR_MSG} && exit 2 ;;
         esac
     fi
@@ -139,6 +142,7 @@ install_dkpg() {
                 pacman -S ${1} --noconfirm
             fi
             ;;
+        Alpine) apk add ${1} ;;
         *)
             BIT=$(dpkg --print-architecture)
             INSTALL_P=${1}_${2}_${BIT}.deb
@@ -179,6 +183,7 @@ update_list() {
     Ubuntu) $ag update -y && $ag install dpkg ;;
     CentOS) yum update -y && yum install which -y ;;
     Arch) pacman -Syu --noconfirm ;;
+    Alpine) apk update ;;
     *) echo_color red ${ERROR_MSG} && exit 1 ;;
     esac
 }
@@ -189,7 +194,7 @@ if [ -z "$(ls -a ${ZDOTDIR:-$HOME} | sed -n '/\.oh-my-zsh/p')" ]; then
     check_install curl
     check_install git
     check_install vim
-    if [ -z "$(echo $DISTRIBUTION | sed -n '/Arch/p')" ]; then
+    if [ -z "$(echo $DISTRIBUTION | sed -n '/\(Arch\|Alpine\)/p')" ]; then
         chsh -s $(which zsh)
     fi
 
@@ -223,10 +228,12 @@ else
     install_dkpg fd $FD_VERSION $FD_URL
 
     # install bat, from https://github.com/sharkdp/bat
-    install_dkpg bat $BAT_VERSION $BAT_URL
+    if [ -z "$(echo $DISTRIBUTION | sed -n '/Alpine/p')" ]; then
+        install_dkpg bat $BAT_VERSION $BAT_URL
+    fi
 
     # install fzf & bind default key-binding
-    if [ -z "$(ls -a ${ZDOTDIR:-$HOME} | sed -n '/\.fzf/p')" ]; then
+    if [ -z "$(ls -a ${ZDOTDIR:-$HOME} | sed -n '/\.fzf/p')" ] && [ -z "$(echo $DISTRIBUTION | sed -n '/Alpine/p')" ]; then
 
         echo_color yellow "${SIGN_2} ${DOW} fzf ${SIGN_2}"
         git clone --depth 1 https://github.com/junegunn/fzf ${FZF}
@@ -248,7 +255,7 @@ else
     fi
 
     # vimrc
-    if [ -z "$(ls -a ${ZDOTDIR:-$HOME} | sed -n '/\.vim_runtime/p')" ]; then
+    if [ -z "$(ls -a ${ZDOTDIR:-$HOME} | sed -n '/\.vim_runtime/p')" ] && [ -z "$(echo $DISTRIBUTION | sed -n '/Alpine/p')" ]; then
         echo_color yellow "${SIGN_2} ${DOW} vimrc ${SIGN_2}"
         git clone --depth=1 ${VIM_URL} ${VIM_P}
         echo_color yellow "${SIGN_2} ${INS} vimrc ${SIGN_2}"
