@@ -1,7 +1,7 @@
 #!/bin/bash
 # @Author: gunjianpan
 # @Date:   2019-04-30 13:26:25
-# @Last Modified time: 2021-04-05 23:26:33
+# @Last Modified time: 2021-07-22 20:30:29
 # A zsh deploy shell for ubuntu.
 # In this shell, will install zsh, oh-my-zsh, zsh-syntax-highlighting, zsh-autosuggestions, fzf, vimrc, bat
 
@@ -54,7 +54,7 @@ DISTRIBUTION=$(lsb_release -a 2>/dev/null | grep -n 'Distributor ID:.*' | awk '{
 if [ -z $DISTRIBUTION ]; then
     if [ ! -z "$(which yum 2>/dev/null | sed -n '/\/yum/p')" ]; then
         DISTRIBUTION=CentOS
-    elif [ ! -z "$(sw_vers 2>/dev/null | sed -n '/Mac/p')" ]; then
+    elif [ ! -z "$(sw_vers 2>/dev/null | sed -n '/[mM]ac/p')" ]; then
         DISTRIBUTION=MacOS
     elif [ ! -z "$(which apt 2>/dev/null | sed -n '/\/apt/p')" ]; then
         DISTRIBUTION=Ubuntu
