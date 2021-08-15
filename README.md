@@ -23,10 +23,11 @@ This shell include
 
 Now: support **Ubuntu** + **CentOS** + **Arch** + **Alpine**(part of) + **Windows(WSL/Git Bash)** + **MacOS**(I can't find a test machine, hhh, maybe have some bugs.)
 
-- Test in docker & host version, in AiliYun, TencentCloud and huaweicloud
-- Support amb64 & i386.
-- Support docker version for Ubuntu, CentOS, Ubuntu/32bit, Alpine(including [iSH](https://github.com/ish-app/ish) in IpadOS)
-- Support WSL, Git Bash in Windows
+- Test in docker & host version, in AiliYun, TencentCloud and huaweicloud;
+- Support amb64 & i386;
+- Support docker version for Ubuntu, CentOS, Ubuntu/32bit, Alpine(including [iSH](https://github.com/ish-app/ish) in IpadOS);
+- Support WSL, Git Bash in Windows;
+- Support normal account;
 
 ## Quick Start
 
@@ -39,6 +40,8 @@ wget https://raw.github.com/iofu728/zsh.sh/master/zsh.sh
 bash zsh.sh && source ${ZDOTDIR:-$HOME}/.zshrc
 bash zsh.sh && source ${ZDOTDIR:-$HOME}/.zshrc
 ```
+
+If you want to set the zsh to default shell, you should replace the `bash zsh.sh` to `bash zsh.sh -r` in root account.
 
 ### Docker
 

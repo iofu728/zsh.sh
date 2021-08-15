@@ -1,11 +1,21 @@
 #!/bin/bash
 # @Author: gunjianpan
 # @Date:   2019-04-30 13:26:25
-# @Last Modified time: 2021-07-22 20:30:29
+# @Last Modified time: 2021-08-16 00:00:24
 # A zsh deploy shell for ubuntu.
 # In this shell, will install zsh, oh-my-zsh, zsh-syntax-highlighting, zsh-autosuggestions, fzf, vimrc, bat
 
 set -e
+
+root=false
+
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -r|--root) root=true ;;
+        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+    esac
+    shift
+done
 
 # some constant params
 FD_VERSION=8.2.1
@@ -195,7 +205,9 @@ if [ -z "$(ls -a ${ZDOTDIR:-$HOME} | sed -n '/\.oh-my-zsh/p')" ]; then
     check_install git
     check_install vim
     if [ -z "$(echo $DISTRIBUTION | sed -n '/\(Arch\|Alpine\)/p')" ]; then
-        chsh -s $(which zsh)
+        if [ "$root" = true ]; then
+            chsh -s $(which zsh)
+        fi
     fi
 
     echo_color yellow "${SIGN_1} ${INS} oh-my-zsh ${SIGN_1}"
