@@ -1,7 +1,7 @@
 #!/bin/bash
 # @Author: gunjianpan
 # @Date:   2019-04-30 13:26:25
-# @Last Modified time: 2021-08-16 00:00:24
+# @Last Modified time: 2021-10-05 13:58:23
 # A zsh deploy shell for ubuntu.
 # In this shell, will install zsh, oh-my-zsh, zsh-syntax-highlighting, zsh-autosuggestions, fzf, vimrc, bat
 
@@ -212,7 +212,7 @@ if [ -z "$(ls -a ${ZDOTDIR:-$HOME} | sed -n '/\.oh-my-zsh/p')" ]; then
 
     echo_color yellow "${SIGN_1} ${INS} oh-my-zsh ${SIGN_1}"
     echo_color red "${SIGN_3} After Install you should ·${BASH_SH} && ${SOURCE_SH}· Again ${SIGN_3}"
-    sh -c "$(curl -fsSL ${OH_MY_ZSH_URL})"
+    sh -c "$(curl -fsSL ${OH_MY_ZSH_URL})" "" --unattended
 else
     echo_color green "ZSH_CUSTOM: ${ZSH_CUSTOM}"
 
