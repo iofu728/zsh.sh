@@ -36,12 +36,18 @@ Now: support **Ubuntu** + **CentOS** + **Arch** + **Alpine**(part of) + **Window
 PS: you need execute `bash zsh.sh && source ${ZDOTDIR:-$HOME}/.zshrc` by twice
 
 ```bash
-wget https://raw.github.com/iofu728/zsh.sh/master/zsh.sh
+curl -fsSLO https://raw.githubusercontent.com/iofu728/zsh.sh/master/zsh.sh
 bash zsh.sh && source ${ZDOTDIR:-$HOME}/.zshrc
 bash zsh.sh && source ${ZDOTDIR:-$HOME}/.zshrc
 ```
 
 If you want to set the zsh to default shell, you should replace the `bash zsh.sh` to `bash zsh.sh -r` in root account.
+
+Run `bash zsh.sh -h` for all options.
+
+On CentOS 7 (glibc 2.17) the prebuilt `fd`/`bat` packages need glibc >= 2.18, so they are
+skipped with a warning. Pass `--force-glibc` to build and install `glibc-2.18` over the system
+one — that can break the machine, so only do it in a throwaway container/VM.
 
 ### Docker
 
