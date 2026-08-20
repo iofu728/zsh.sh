@@ -1,31 +1,57 @@
 #!/bin/bash
 # @Author: gunjianpan
 # @Date:   2019-04-30 13:26:25
-# @Last Modified time: 2021-10-05 13:58:23
+# @Last Modified time: 2026-08-13 00:00:00
 # A zsh deploy shell for ubuntu.
 # In this shell, will install zsh, oh-my-zsh, zsh-syntax-highlighting, zsh-autosuggestions, fzf, vimrc, bat
 
 set -e
 
 root=false
+force_glibc=false
+
+usage() {
+    cat <<'EOS'
+Usage: bash zsh.sh [options]
+
+  -r, --root         chsh the current user default shell to zsh
+      --force-glibc  CentOS only: build & install glibc-2.18 over the system
+                     glibc when it is too old for the fd/bat .deb packages.
+                     DANGEROUS, can break the system. Off by default.
+  -h, --help         show this help
+
+PS: you need to execute `bash zsh.sh && source ${ZDOTDIR:-$HOME}/.zshrc` twice.
+EOS
+}
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        -r|--root) root=true ;;
-        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+    -r | --root) root=true ;;
+    --force-glibc) force_glibc=true ;;
+    -h | --help)
+        usage
+        exit 0
+        ;;
+    *)
+        echo "Unknown parameter passed: $1"
+        usage
+        exit 1
+        ;;
     esac
     shift
 done
 
 # some constant params
-FD_VERSION=8.2.1
-BAT_VERSION=0.18.0
+FD_VERSION=10.4.2
+BAT_VERSION=0.26.1
 ZSH_HL=zsh-syntax-highlighting
 ZSH_AS=zsh-autosuggestions
-ZSH_CUSTOM=${ZSH}/custom
-ZSH_P=${ZSH_CUSTOM}/plugins/
-ZSH_HL_P=${ZSH_P}${ZSH_HL}
-ZSH_AS_P=${ZSH_P}${ZSH_AS}
+# $ZSH is exported by ~/.zshrc (oh-my-zsh); keep a default for the first run
+ZSH=${ZSH:-${ZDOTDIR:-$HOME}/.oh-my-zsh}
+ZSH_CUSTOM=${ZSH_CUSTOM:-${ZSH}/custom}
+ZSH_P=${ZSH_CUSTOM}/plugins
+ZSH_HL_P=${ZSH_P}/${ZSH_HL}
+ZSH_AS_P=${ZSH_P}/${ZSH_AS}
 ZSHRC=${ZDOTDIR:-$HOME}/.zshrc
 FZF=${ZDOTDIR:-$HOME}/.fzf
 FD_URL=https://github.com/sharkdp/fd/releases/download/v${FD_VERSION}/
@@ -34,19 +60,21 @@ BAT_URL=https://github.com/sharkdp/bat/releases/download/v${BAT_VERSION}/
 VIM_P=${ZDOTDIR:-$HOME}/.vim_runtime
 VIM_URL='https://github.com/amix/vimrc'
 VIMRC=${ZDOTDIR:-$HOME}/.vimrc
-VIMPLUG_URL='https://raw.github.com/junegunn/vim-plug/master/plug.vim'
+VIMPLUG_URL='https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 VIMPLUG_P=${ZDOTDIR:-$HOME}'/.vim/autoload/plug.vim'
-VIMRC_URL='https://raw.github.com/iofu728/zsh.sh/master/.vimrc'
+VIMRC_URL='https://raw.githubusercontent.com/iofu728/zsh.sh/master/.vimrc'
 
-BASH_SHELL='bash zsh.sh'
+BASH_SH='bash zsh.sh'
+# literal on purpose: echoed back to the user as the command to run
+# shellcheck disable=SC2016
 SOURCE_SH='source ${ZDOTDIR:-$HOME}/.zshrc'
-OH_MY_ZSH_URL='https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh'
+OH_MY_ZSH_URL='https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh'
 GITHUB='https://github.com/iofu728/zsh.sh'
 ZSH_USER_URL='https://github.com/zsh-users/'
 ZSH_HL_URL=${ZSH_USER_URL}${ZSH_HL}
 ZSH_AS_URL=${ZSH_USER_URL}${ZSH_AS}
 
-HOMEBREW_URL='https://raw.github.com/Homebrew/install/master/install'
+HOMEBREW_URL='https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh'
 HOMEBREW_TUNA='https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/'
 
 GLIBC='glibc-2.18'
@@ -56,33 +84,8 @@ GLIBC_URL='http://mirrors.ustc.edu.cn/gnu/libc/'${GLIBC_TAR}
 SIGN_1='#-#-#-#-#-#-#-#-#-#'
 SIGN_2='---__---'
 SIGN_3='**************'
-INS='Instaling'
+INS='Installing'
 DOW='Downloading'
-ERROR_MSG="Sorry, this .sh does not support your Linux Distribution ${DISTRIBUTION}. Please open one issue in ${GITHUB} "
-
-DISTRIBUTION=$(lsb_release -a 2>/dev/null | grep -n 'Distributor ID:.*' | awk '{print $3}' 2>/dev/null)
-if [ -z $DISTRIBUTION ]; then
-    if [ ! -z "$(which yum 2>/dev/null | sed -n '/\/yum/p')" ]; then
-        DISTRIBUTION=CentOS
-    elif [ ! -z "$(sw_vers 2>/dev/null | sed -n '/[mM]ac/p')" ]; then
-        DISTRIBUTION=MacOS
-    elif [ ! -z "$(which apt 2>/dev/null | sed -n '/\/apt/p')" ]; then
-        DISTRIBUTION=Ubuntu
-    elif [ ! -z "$(which pacman 2>/dev/null | sed -n '/\/pacman/p')" ]; then
-        DISTRIBUTION=Arch
-    elif [ ! -z "$(which apk 2>/dev/null | sed -n '/\/apk/p')" ]; then
-        DISTRIBUTION=Alpine
-    fi
-fi
-
-if [ ! -z "$(echo $DISTRIBUTION | sed -n '/Ubuntu/p')" ]; then
-    APT=apt || APT=apt-get
-    if [ ! -z "$(which sudo | sed -n '/\/sudo/p')" ]; then
-        ag="sudo ${APT}"
-    else
-        ag="${APT}"
-    fi
-fi
 
 # echo color
 RED='\033[1;91m'
@@ -93,122 +96,319 @@ CYAN='\033[1;96m'
 NC='\033[0m'
 
 echo_color() {
+    local color
     case ${1} in
-    red) echo -e "${RED} ${2} ${NC}" ;;
-    green) echo -e "${GREEN} ${2} ${NC}" ;;
-    yellow) echo -e "${YELLOW} ${2} ${NC}" ;;
-    blue) echo -e "${BLUE} ${2} ${NC}" ;;
-    cyan) echo -e "${CYAN} ${2} ${NC}" ;;
-    *) echo ${2} ;;
+    red) color=${RED} ;;
+    green) color=${GREEN} ;;
+    yellow) color=${YELLOW} ;;
+    blue) color=${BLUE} ;;
+    cyan) color=${CYAN} ;;
+    *)
+        echo "${2}"
+        return 0
+        ;;
+    esac
+    echo -e "${color} ${2} ${NC}"
+}
+
+# has <cmd>: true when <cmd> is an executable in PATH
+has() {
+    command -v "${1}" >/dev/null 2>&1
+}
+
+unsupported() {
+    echo_color red "Sorry, this .sh does not support your Distribution ${DISTRIBUTION:-unknown}. Please open one issue in ${GITHUB} "
+    exit "${1:-2}"
+}
+
+# fetch <url> <dest>
+fetch() {
+    curl -fsSL "${1}" -o "${2}"
+}
+
+detect_distribution() {
+    if has sw_vers; then
+        echo MacOS
+        return 0
+    fi
+    if [ -r /etc/os-release ]; then
+        local ids
+        # /etc/os-release is a shell-fragment by spec
+        # shellcheck disable=SC1091
+        ids=$(. /etc/os-release 2>/dev/null && echo "${ID:-} ${ID_LIKE:-}") || ids=
+        case " ${ids} " in
+        *ubuntu* | *debian*)
+            echo Ubuntu
+            return 0
+            ;;
+        *centos* | *rhel* | *fedora*)
+            echo CentOS
+            return 0
+            ;;
+        *arch*)
+            echo Arch
+            return 0
+            ;;
+        *alpine*)
+            echo Alpine
+            return 0
+            ;;
+        esac
+    fi
+    if has yum || has dnf; then
+        echo CentOS
+    elif has apt || has apt-get; then
+        echo Ubuntu
+    elif has pacman; then
+        echo Arch
+    elif has apk; then
+        echo Alpine
+    fi
+    return 0
+}
+
+DISTRIBUTION=${DISTRIBUTION:-$(detect_distribution)}
+
+# a normal account needs sudo, root does not have to have it installed
+if [ "$(id -u)" -ne 0 ] && has sudo; then
+    SUDO=sudo
+else
+    SUDO=
+fi
+
+case ${DISTRIBUTION} in
+Ubuntu)
+    if has apt; then APT=apt; else APT=apt-get; fi
+    ag="${SUDO} ${APT}"
+    ;;
+CentOS)
+    if has dnf; then YUM=dnf; else YUM=yum; fi
+    ;;
+esac
+
+check_install() {
+    if has "${1}"; then
+        return 0
+    fi
+    echo_color green "${SIGN_1} ${INS} ${1} ${SIGN_1}"
+    case ${DISTRIBUTION} in
+    MacOS) brew install "${1}" ;;
+    Ubuntu) ${ag} install "${1}" -y ;;
+    CentOS) ${SUDO} "${YUM}" install "${1}" -y ;;
+    Arch) ${SUDO} pacman -Sy "${1}" --noconfirm ;;
+    Alpine) ${SUDO} apk add "${1}" ;;
+    *) unsupported 2 ;;
     esac
 }
 
-check_install() {
-    if [ -z "$(which ${1} 2>/dev/null | sed -n '/\/'${1}'/p')" ]; then
-        echo_color green "${SIGN_1} ${INS} ${1} ${SIGN_1}"
-        case $DISTRIBUTION in
-        MacOS) brew install ${1} ;;
-        Ubuntu) $ag install ${1} -y ;;
-        CentOS) yum install ${1} -y ;;
-        Arch) pacman -Sy ${1} --noconfirm ;;
-        Alpine) apk add ${1} ;;
-        *) echo_color red ${ERROR_MSG} && exit 2 ;;
-        esac
-    fi
-
+# fd/bat publish i686 debs, but `dpkg --print-architecture` says i386
+deb_arch() {
+    local bit
+    bit=$(dpkg --print-architecture)
+    case ${bit} in
+    i386) echo i686 ;;
+    *) echo "${bit}" ;;
+    esac
 }
 
-install_dkpg() {
-    if [ -z "$(which ${1} 2>/dev/null | sed -n '/\/'${1}'/p')" ]; then
-        if [ ! -z "$(echo $DISTRIBUTION | sed -n '/CentOS/p')" ]; then
-            if [ -z "$(which dpkg 2>/dev/null | sed -n '/\/dpkg/p')" ]; then
-                echo_color yellow "${SIGN_2} ${INS} dpkg ${SIGN_2}"
-                yum epel-release -y && yum repolist && yum install dpkg-devel dpkg-dev -y
-            fi
-            if [ -z "$(strings /lib64/libc.so.6 | sed -n '/GLIBC_2.18/p')" ]; then
-                if [ -z "$(which gcc 2>/dev/null | sed -n '/\/gcc/p')" ]; then
-                    echo_color yellow "${SIGN_2} ${INS} gcc ${SIGN_2}"
-                    yum update -y && yum install gcc -y
-                fi
-                echo_color yellow "${SIGN_2} ${DOW} ${GLIBC} ${SIGN_2}"
-                cd ${ZDOTDIR:-$HOME} && wget ${GLIBC_URL}
-                tar -zxvf ${GLIBC_TAR} && cd ${GLIBC}
-                echo_color yellow "${SIGN_2} ${INS} ${GLIBC} ${SIGN_2}"
-                mkdir build && cd build && bash ../configure --prefix=/usr
-                make -j4 >/dev/null && make install >/dev/null
-            fi
-        elif [ ! -z "$(echo $DISTRIBUTION | sed -n '/Ubuntu/p')" ]; then
-            if [ -z "$(which dpkg | sed -n '/\/dpkg/p')" ]; then
-                $ag install dpkg -y
-            fi
-        fi
-
-        # install $1
-        echo_color yellow "${SIGN_2} ${DOW} ${1} ${SIGN_2}"
-        case $DISTRIBUTION in
-        MacOS) check_install ${1} ;;
-        Arch)
-            if [ -z "$(which git | sed -n '/mingw64/p')" ]; then
-                pacman -S ${1} --noconfirm
-            fi
-            ;;
-        Alpine) apk add ${1} ;;
-        *)
-            BIT=$(dpkg --print-architecture)
-            INSTALL_P=${1}_${2}_${BIT}.deb
-            if [ ! -z "$(which sudo | sed -n '/\/sudo/p')" ]; then
-                sdpkg='sudo dpkg'
-            else
-                sdpkg='dpkg'
-            fi
-            cd ${ZDOTDIR:-$HOME} && rm -rf ${INSTALL_P}* && wget ${3}${INSTALL_P} && $sdpkg -i ${INSTALL_P}
-            ;;
-        esac
+# CentOS 7 ships glibc 2.17, the prebuilt debs need >= 2.18.
+# Building glibc over /usr can brick the box, so it is opt-in.
+prepare_centos_glibc() {
+    if ! has dpkg; then
+        echo_color yellow "${SIGN_2} ${INS} dpkg ${SIGN_2}"
+        ${SUDO} "${YUM}" install epel-release -y && ${SUDO} "${YUM}" repolist &&
+            ${SUDO} "${YUM}" install dpkg-devel dpkg-dev -y
     fi
+    if strings /lib64/libc.so.6 2>/dev/null | grep -q 'GLIBC_2.18'; then
+        return 0
+    fi
+    if [ "${force_glibc}" != true ]; then
+        echo_color red "${SIGN_3} system glibc < 2.18, skip this package. Rerun with --force-glibc to build ${GLIBC} (DANGEROUS) ${SIGN_3}"
+        return 1
+    fi
+    if ! has gcc; then
+        echo_color yellow "${SIGN_2} ${INS} gcc ${SIGN_2}"
+        ${SUDO} "${YUM}" install gcc make -y
+    fi
+    echo_color yellow "${SIGN_2} ${DOW} ${GLIBC} ${SIGN_2}"
+    cd "${ZDOTDIR:-$HOME}" && fetch "${GLIBC_URL}" "${GLIBC_TAR}"
+    tar -zxf "${GLIBC_TAR}" && cd "${GLIBC}"
+    echo_color yellow "${SIGN_2} ${INS} ${GLIBC} ${SIGN_2}"
+    mkdir -p build && cd build && bash ../configure --prefix=/usr
+    make -j4 >/dev/null && ${SUDO} make install >/dev/null
+}
+
+# install_pkg <name> <version> <deb-url-prefix>
+install_pkg() {
+    if has "${1}"; then
+        return 0
+    fi
+    case ${DISTRIBUTION} in
+    MacOS) check_install "${1}" ;;
+    Arch)
+        # skip on Git Bash / MSYS, where pacman has no such package
+        if ! command -v git | grep -q mingw64; then
+            ${SUDO} pacman -S "${1}" --noconfirm
+        fi
+        ;;
+    Alpine) ${SUDO} apk add "${1}" ;;
+    Ubuntu | CentOS)
+        if [ "${DISTRIBUTION}" = CentOS ]; then
+            prepare_centos_glibc || return 0
+        elif ! has dpkg; then
+            ${ag} install dpkg -y
+        fi
+        echo_color yellow "${SIGN_2} ${DOW} ${1} ${SIGN_2}"
+        local deb
+        deb=${1}_${2}_$(deb_arch).deb
+        cd "${ZDOTDIR:-$HOME}" && rm -rf "${deb}"*
+        fetch "${3}${deb}" "${deb}" && ${SUDO} dpkg -i "${deb}"
+        ;;
+    *) unsupported 2 ;;
+    esac
+}
+
+# append <line> to ~/.zshrc, once
+append_zshrc() {
+    if ! grep -qF "${1}" "${ZSHRC}" 2>/dev/null; then
+        echo "${1}" >>"${ZSHRC}"
+    fi
+}
+
+# sed -i, BSD (MacOS) and GNU flavours
+sed_i() {
+    local expr=${1}
+    shift
+    case ${DISTRIBUTION} in
+    MacOS) sed -i '' "${expr}" "$@" ;;
+    *) sed -i "${expr}" "$@" ;;
+    esac
 }
 
 update_list() {
-    case $DISTRIBUTION in
+    case ${DISTRIBUTION} in
     MacOS)
-        if [ -z "$(ls /Library/Developer/CommandLineTools 2>/dev/null)" ]; then
+        if [ ! -d /Library/Developer/CommandLineTools ]; then
             xcode-select --install
         fi
         # Homebrew
-        if [ -z "$(which brew | sed -n '/\/brew/p')" ]; then
-            echo_color yellow "${SIGN_2} ${DOW} homebrew ${SIGN_2}"
-            wget ${HOMEBREW_URL}
+        if ! has brew; then
             echo_color yellow "${SIGN_2} ${INS} homebrew ${SIGN_2}"
-            /usr/bin/ruby install
+            /bin/bash -c "$(curl -fsSL ${HOMEBREW_URL})"
+            # brew is not in PATH yet in this shell
+            for brew_p in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+                if [ -x "${brew_p}" ]; then
+                    eval "$(${brew_p} shellenv)"
+                    break
+                fi
+            done
 
             echo_color green "${SIGN_1} ${INS} git ${SIGN_1}"
             brew install git
 
-            cd "$(brew --repo)"
-            git remote set-url origin ${HOMEBREW_TUNA}brew.git
-            cd "$(brew --repo)/Library/Taps/homebrew/homebrew-core"
-            git remote set-url origin ${HOMEBREW_TUNA}homebrew-core.git
+            # tuna mirror, comment out the block below outside of China
+            if [ -d "$(brew --repo)/.git" ]; then
+                git -C "$(brew --repo)" remote set-url origin ${HOMEBREW_TUNA}brew.git
+            fi
+            if [ -d "$(brew --repo)/Library/Taps/homebrew/homebrew-core/.git" ]; then
+                git -C "$(brew --repo)/Library/Taps/homebrew/homebrew-core" \
+                    remote set-url origin ${HOMEBREW_TUNA}homebrew-core.git
+            fi
         fi
-        check_install truncate
         ;;
-    Ubuntu) $ag update -y && $ag install dpkg ;;
-    CentOS) yum update -y && yum install which -y ;;
-    Arch) pacman -Syu --noconfirm ;;
-    Alpine) apk update ;;
-    *) echo_color red ${ERROR_MSG} && exit 1 ;;
+    Ubuntu) ${ag} update -y && ${ag} install dpkg -y ;;
+    # no `yum update -y` here: a full system upgrade is slow and not needed
+    CentOS) ${SUDO} "${YUM}" install which -y ;;
+    Arch) ${SUDO} pacman -Syu --noconfirm ;;
+    Alpine) ${SUDO} apk update ;;
+    *) unsupported 1 ;;
     esac
 }
 
-if [ -z "$(ls -a ${ZDOTDIR:-$HOME} | sed -n '/\.oh-my-zsh/p')" ]; then
+# zsh-syntax-highlighting + zsh-autosuggestions + .zshrc plugins line
+install_zsh_plugins() {
+    if [ ! -d "${ZSH_HL_P}" ]; then
+        echo_color yellow "${SIGN_2} ${DOW} ${ZSH_HL} ${SIGN_2}"
+        git clone --depth 1 ${ZSH_HL_URL} "${ZSH_HL_P}"
+    fi
+    append_zshrc "source \$ZSH_CUSTOM/plugins/${ZSH_HL}/${ZSH_HL}.zsh"
+
+    if [ ! -d "${ZSH_AS_P}" ]; then
+        echo_color yellow "${SIGN_2} ${DOW} ${ZSH_AS} ${SIGN_2}"
+        git clone --depth 1 ${ZSH_AS_URL} "${ZSH_AS_P}"
+    fi
+    append_zshrc "source \$ZSH_CUSTOM/plugins/${ZSH_AS}/${ZSH_AS}.zsh"
+
+    # change ~/.zshrc, the plugins are sourced above, don't load them twice
+    sed_i 's/plugins=(git)/plugins=(git docker)/' "${ZSHRC}"
+}
+
+# fd & bat, from https://github.com/sharkdp
+install_fd_bat() {
+    install_pkg fd $FD_VERSION $FD_URL
+    if [ "${DISTRIBUTION}" != Alpine ]; then
+        install_pkg bat $BAT_VERSION $BAT_URL
+    fi
+}
+
+# fzf & default key-bindings
+install_fzf() {
+    if [ -d "${FZF}" ] || [ "${DISTRIBUTION}" = Alpine ]; then
+        return 0
+    fi
+    echo_color yellow "${SIGN_2} ${DOW} fzf ${SIGN_2}"
+    git clone --depth 1 https://github.com/junegunn/fzf "${FZF}"
+    echo_color yellow "${SIGN_2} ${INS} fzf ${SIGN_2}"
+    bash "${FZF}"/install --all
+
+    # alter filefind to fd
+    append_zshrc "export FZF_DEFAULT_COMMAND='fd --type file'"
+    append_zshrc "export FZF_CTRL_T_COMMAND=\$FZF_DEFAULT_COMMAND"
+    append_zshrc "export FZF_ALT_C_COMMAND='fd -t d . '"
+
+    # Ctrl+R History command; Ctrl+R file catalog
+    # if you want to DIY key of like 'Atl + C'
+    # maybe line-num is not 64, but must nearby
+    sed_i 's/\\ec/^\\/' "${FZF}"/shell/key-bindings.zsh
+}
+
+# vimrc + vim-plug
+install_vimrc() {
+    if [ -d "${VIM_P}" ] || [ "${DISTRIBUTION}" = Alpine ]; then
+        return 0
+    fi
+    echo_color yellow "${SIGN_2} ${DOW} vimrc ${SIGN_2}"
+    git clone --depth=1 ${VIM_URL} "${VIM_P}"
+    echo_color yellow "${SIGN_2} ${INS} vimrc ${SIGN_2}"
+    sh "${VIM_P}"/install_awesome_vimrc.sh
+
+    curl -fLo "${VIMPLUG_P}" --create-dirs ${VIMPLUG_URL}
+    if [ -f "${VIMRC}" ]; then
+        cp "${VIMRC}" "${VIMRC}".old.1
+    fi
+    fetch ${VIMRC_URL} "${VIMRC}"
+
+    if [ -z "${IS_DOCKER:-}" ] && [ -e /dev/tty ]; then
+        echo_color yellow "${SIGN_2} ${INS} vim plugs ${SIGN_2}"
+        vim +'PlugInstall --sync' +qall &>/dev/null </dev/tty ||
+            echo_color red "PlugInstall failed, run ·vim +'PlugInstall --sync' +qall· by hand"
+    fi
+}
+
+if [ ! -d "${ZSH}" ]; then
     update_list
     check_install zsh
     check_install curl
     check_install git
     check_install vim
-    if [ -z "$(echo $DISTRIBUTION | sed -n '/\(Arch\|Alpine\)/p')" ]; then
-        if [ "$root" = true ]; then
-            chsh -s $(which zsh)
+    case ${DISTRIBUTION} in
+    Arch | Alpine) ;; # busybox / no chsh
+    *)
+        if [ "${root}" = true ]; then
+            chsh -s "$(command -v zsh)" || echo_color red "chsh failed, keep the current default shell"
         fi
-    fi
+        ;;
+    esac
 
     echo_color yellow "${SIGN_1} ${INS} oh-my-zsh ${SIGN_1}"
     echo_color red "${SIGN_3} After Install you should ·${BASH_SH} && ${SOURCE_SH}· Again ${SIGN_3}"
@@ -216,72 +416,20 @@ if [ -z "$(ls -a ${ZDOTDIR:-$HOME} | sed -n '/\.oh-my-zsh/p')" ]; then
 else
     echo_color green "ZSH_CUSTOM: ${ZSH_CUSTOM}"
 
-    # zsh syntax highlighting
-    if [ -z "$(ls ${ZSH_P} | sed -n '/'${ZSH_HL}'/p')" ]; then
-        echo_color yellow "${SIGN_2} ${DOW} ${ZSH_HL} ${SIGN_2}"
-        git clone ${ZSH_HL_URL} ${ZSH_HL_P}
-        echo "source \$ZSH_CUSTOM/plugins/${ZSH_HL}/${ZSH_HL}.zsh" >>${ZSHRC}
-    fi
+    # the four installs are independent, run them in parallel;
+    # wait for all and fail if any of them failed
+    install_zsh_plugins &
+    install_fd_bat &
+    install_fzf &
+    install_vimrc &
 
-    # zsh-autosuggestions
-    if [ -z "$(ls ${ZSH_P} | sed -n '/'${ZSH_AS}'/p')" ]; then
-        echo_color yellow "${SIGN_2} ${DOW} ${ZSH_AS} ${SIGN_2}"
-        git clone ${ZSH_AS_URL} ${ZSH_AS_P}
-        echo "source \$ZSH_CUSTOM/plugins/${ZSH_AS}/${ZSH_AS}.zsh" >>${ZSHRC}
-    fi
-
-    # change ~/.zshrc
-    case $DISTRIBUTION in
-    MacOS) sed -i '' 's/plugins=(git)/plugins=(git docker zsh-autosuggestions)/' ${ZSHRC} ;;
-    *) sed -i 's/plugins=(git)/plugins=(git docker zsh-autosuggestions)/' ${ZSHRC} ;;
-    esac
-
-    # install fd, from https://github.com/sharkdp/fd
-    install_dkpg fd $FD_VERSION $FD_URL
-
-    # install bat, from https://github.com/sharkdp/bat
-    if [ -z "$(echo $DISTRIBUTION | sed -n '/Alpine/p')" ]; then
-        install_dkpg bat $BAT_VERSION $BAT_URL
-    fi
-
-    # install fzf & bind default key-binding
-    if [ -z "$(ls -a ${ZDOTDIR:-$HOME} | sed -n '/\.fzf/p')" ] && [ -z "$(echo $DISTRIBUTION | sed -n '/Alpine/p')" ]; then
-
-        echo_color yellow "${SIGN_2} ${DOW} fzf ${SIGN_2}"
-        git clone --depth 1 https://github.com/junegunn/fzf ${FZF}
-        echo_color yellow "${SIGN_2} ${INS} fzf ${SIGN_2}"
-        bash ${FZF}/install <<<'yyy'
-
-        # alter filefind to fd
-        echo "export FZF_DEFAULT_COMMAND='fd --type file'" >>${ZSHRC}
-        echo "export FZF_CTRL_T_COMMAND=\$FZF_DEFAULT_COMMAND" >>${ZSHRC}
-        echo "export FZF_ALT_C_COMMAND='fd -t d . '" >>${ZSHRC}
-
-        # Ctrl+R History command; Ctrl+R file catalog
-        # if you want to DIY key of like 'Atl + C'
-        # maybe line-num is not 64, but must nearby
-        case $DISTRIBUTION in
-        MacOS) sed -i '' 's/\\ec/^\\/' ${FZF}/shell/key-bindings.zsh ;;
-        *) sed -i 's/\\ec/^\\/' ${FZF}/shell/key-bindings.zsh ;;
-        esac
-    fi
-
-    # vimrc
-    if [ -z "$(ls -a ${ZDOTDIR:-$HOME} | sed -n '/\.vim_runtime/p')" ] && [ -z "$(echo $DISTRIBUTION | sed -n '/Alpine/p')" ]; then
-        echo_color yellow "${SIGN_2} ${DOW} vimrc ${SIGN_2}"
-        git clone --depth=1 ${VIM_URL} ${VIM_P}
-        echo_color yellow "${SIGN_2} ${INS} vimrc ${SIGN_2}"
-        sh ${VIM_P}/install_awesome_vimrc.sh
-
-        curl -fLo ${VIMPLUG_P} --create-dirs ${VIMPLUG_URL}
-        cp ${VIMRC} ${VIMRC}.old.1
-        truncate -s 0 ${VIMRC}
-        curl -fsSL ${VIMRC_URL} >>${VIMRC}
-
-        if [ -z "$(echo ${IS_DOCKER})" ]; then
-            echo_color yellow "${SIGN_2} ${INS} vim plugs ${SIGN_2}"
-            vim +'PlugInstall --sync' +qall &>/dev/null </dev/tty
-        fi
+    rc=0
+    for pid in $(jobs -p); do
+        wait "${pid}" || rc=1
+    done
+    if [ ${rc} -ne 0 ]; then
+        echo_color red "some install step failed, rerun ·${BASH_SH}· to retry"
+        exit 1
     fi
 
     echo_color red "Warning: If you only execute ·${BASH_SH}·. You need ·${SOURCE_SH}· After running this shell."

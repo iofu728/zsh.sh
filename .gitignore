@@ -1,0 +1,11 @@
+# editor local history
+.history/
+
+# artifacts downloaded/produced while running zsh.sh
+install
+install.sh
+*.deb
+glibc-*.tar.gz
+
+# macOS
+.DS_Store
