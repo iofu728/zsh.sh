@@ -1,9 +1,9 @@
 #!/bin/bash
 # @Author: gunjianpan
 # @Date:   2019-04-30 13:26:25
-# @Last Modified time: 2026-08-13 00:00:00
+# @Last Modified time: 2026-08-22 16:35:00
 # A zsh deploy shell for ubuntu.
-# In this shell, will install zsh, oh-my-zsh, zsh-syntax-highlighting, zsh-autosuggestions, fzf, vimrc, bat
+# In this shell, will install zsh, oh-my-zsh, zsh-syntax-highlighting, zsh-autosuggestions, fzf-tab, fzf, atuin, zoxide, direnv, carapace, vimrc, bat
 
 set -e
 
@@ -46,12 +46,14 @@ FD_VERSION=10.4.2
 BAT_VERSION=0.26.1
 ZSH_HL=zsh-syntax-highlighting
 ZSH_AS=zsh-autosuggestions
+ZSH_FT=fzf-tab
 # $ZSH is exported by ~/.zshrc (oh-my-zsh); keep a default for the first run
 ZSH=${ZSH:-${ZDOTDIR:-$HOME}/.oh-my-zsh}
 ZSH_CUSTOM=${ZSH_CUSTOM:-${ZSH}/custom}
 ZSH_P=${ZSH_CUSTOM}/plugins
 ZSH_HL_P=${ZSH_P}/${ZSH_HL}
 ZSH_AS_P=${ZSH_P}/${ZSH_AS}
+ZSH_FT_P=${ZSH_P}/${ZSH_FT}
 ZSHRC=${ZDOTDIR:-$HOME}/.zshrc
 FZF=${ZDOTDIR:-$HOME}/.fzf
 FD_URL=https://github.com/sharkdp/fd/releases/download/v${FD_VERSION}/
@@ -73,6 +75,7 @@ GITHUB='https://github.com/iofu728/zsh.sh'
 ZSH_USER_URL='https://github.com/zsh-users/'
 ZSH_HL_URL=${ZSH_USER_URL}${ZSH_HL}
 ZSH_AS_URL=${ZSH_USER_URL}${ZSH_AS}
+ZSH_FT_URL='https://github.com/Aloxaf/fzf-tab'
 
 HOMEBREW_URL='https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh'
 HOMEBREW_TUNA='https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/'
@@ -275,6 +278,14 @@ append_zshrc() {
     fi
 }
 
+# append <line> to ~/.zshrc unless <match> already appears in it; use this
+# when the same line may exist with different quoting
+append_zshrc_match() {
+    if ! grep -qF "${1}" "${ZSHRC}" 2>/dev/null; then
+        echo "${2}" >>"${ZSHRC}"
+    fi
+}
+
 # sed -i, BSD (MacOS) and GNU flavours
 sed_i() {
     local expr=${1}
@@ -325,19 +336,29 @@ update_list() {
     esac
 }
 
-# zsh-syntax-highlighting + zsh-autosuggestions + .zshrc plugins line
+# zsh-syntax-highlighting + zsh-autosuggestions + fzf-tab + .zshrc plugins line
 install_zsh_plugins() {
     if [ ! -d "${ZSH_HL_P}" ]; then
         echo_color yellow "${SIGN_2} ${DOW} ${ZSH_HL} ${SIGN_2}"
         git clone --depth 1 ${ZSH_HL_URL} "${ZSH_HL_P}"
     fi
-    append_zshrc "source \$ZSH_CUSTOM/plugins/${ZSH_HL}/${ZSH_HL}.zsh"
+    append_zshrc_match "plugins/${ZSH_HL}/${ZSH_HL}.zsh" "source \$ZSH_CUSTOM/plugins/${ZSH_HL}/${ZSH_HL}.zsh"
+
+    if [ ! -d "${ZSH_FT_P}" ]; then
+        echo_color yellow "${SIGN_2} ${DOW} ${ZSH_FT} ${SIGN_2}"
+        git clone --depth 1 ${ZSH_FT_URL} "${ZSH_FT_P}"
+    fi
+    # fzf-tab wraps the completion widgets, so it should load BEFORE
+    # zsh-autosuggestions; on a fresh .zshrc this append order guarantees it.
+    # On a .zshrc where autosuggestions is already sourced it lands at the end,
+    # which still works but is not the upstream-recommended order.
+    append_zshrc_match "plugins/${ZSH_FT}/fzf-tab.plugin.zsh" "source \$ZSH_CUSTOM/plugins/${ZSH_FT}/fzf-tab.plugin.zsh"
 
     if [ ! -d "${ZSH_AS_P}" ]; then
         echo_color yellow "${SIGN_2} ${DOW} ${ZSH_AS} ${SIGN_2}"
         git clone --depth 1 ${ZSH_AS_URL} "${ZSH_AS_P}"
     fi
-    append_zshrc "source \$ZSH_CUSTOM/plugins/${ZSH_AS}/${ZSH_AS}.zsh"
+    append_zshrc_match "plugins/${ZSH_AS}/${ZSH_AS}.zsh" "source \$ZSH_CUSTOM/plugins/${ZSH_AS}/${ZSH_AS}.zsh"
 
     # change ~/.zshrc, the plugins are sourced above, don't load them twice
     sed_i 's/plugins=(git)/plugins=(git docker)/' "${ZSHRC}"
@@ -395,6 +416,72 @@ install_vimrc() {
     fi
 }
 
+# atuin (history search), zoxide (smart cd), direnv (per-dir env),
+# carapace (generic completions) -- best effort per distro
+install_shell_tools() {
+    local tool
+    for tool in atuin zoxide direnv carapace; do
+        if has "${tool}"; then
+            continue
+        fi
+        case ${DISTRIBUTION} in
+        MacOS) brew install "${tool}" ;;
+        Ubuntu | CentOS)
+            # only zoxide & direnv are in the default apt/yum repos
+            case ${tool} in
+            zoxide | direnv) check_install "${tool}" ;;
+            *) echo_color yellow "${SIGN_2} ${tool} is not in the default repos, install it manually ${SIGN_2}" ;;
+            esac
+            ;;
+        Arch) ${SUDO} pacman -S "${tool}" --noconfirm || echo_color yellow "${SIGN_2} install ${tool} manually (AUR) ${SIGN_2}" ;;
+        Alpine) ${SUDO} apk add "${tool}" || echo_color yellow "${SIGN_2} install ${tool} manually ${SIGN_2}" ;;
+        *) echo_color yellow "${SIGN_2} install ${tool} manually ${SIGN_2}" ;;
+        esac
+    done
+}
+
+# zshrc tweaks: startup perf, brew mirrors and the cached tool inits.
+# Runs in the foreground (after the parallel installs) because it appends
+# multi-line blocks to ${ZSHRC}.
+configure_zshrc() {
+    # skip oh-my-zsh's compaudit security scan of $fpath on every startup
+    append_zshrc "export ZSH_DISABLE_COMPFIX=true"
+
+    if [ "${DISTRIBUTION}" = MacOS ]; then
+        # ghcr.io (the default bottle host) is slow from some networks;
+        # route brew API metadata, bottles and git fetches through USTC
+        append_zshrc "export HOMEBREW_API_DOMAIN=https://mirrors.ustc.edu.cn/homebrew-bottles/api"
+        append_zshrc "export HOMEBREW_BOTTLE_DOMAIN=https://mirrors.ustc.edu.cn/homebrew-bottles"
+        append_zshrc "export HOMEBREW_BREW_GIT_REMOTE=https://mirrors.ustc.edu.cn/brew.git"
+        append_zshrc "export HOMEBREW_CORE_GIT_REMOTE=https://mirrors.ustc.edu.cn/homebrew-core.git"
+    fi
+
+    # `eval "$(tool init zsh)"` forks a subprocess on every startup; cache the
+    # generated code and regenerate only when the binary changes (brew upgrade)
+    if ! grep -qF '_cached_init()' "${ZSHRC}" 2>/dev/null; then
+        cat >>"${ZSHRC}" <<'EOS'
+
+_cached_init() {
+  local name=$1 bin=$2; shift 2
+  local cache="$HOME/.cache/zsh/init-$name.zsh"
+  if [[ ! -r $cache || $commands[$bin] -nt $cache ]]; then
+    mkdir -p "$HOME/.cache/zsh"
+    "$@" >| "$cache" 2>/dev/null
+  fi
+  source "$cache"
+}
+# atuin: Ctrl+R becomes a full-text history search (up arrow untouched)
+(( $+commands[atuin] ))    && _cached_init atuin atuin atuin init zsh --disable-up-arrow
+# zoxide: `z foo` jumps to frecent directories, `zi` for interactive pick
+(( $+commands[zoxide] ))   && _cached_init zoxide zoxide zoxide init zsh
+# direnv: per-directory env via .envrc
+(( $+commands[direnv] ))   && _cached_init direnv direnv direnv hook zsh
+# carapace: lazy completions for hundreds of CLIs
+(( $+commands[carapace] )) && _cached_init carapace carapace carapace _carapace zsh
+EOS
+    fi
+}
+
 if [ ! -d "${ZSH}" ]; then
     update_list
     check_install zsh
@@ -431,6 +518,11 @@ else
         echo_color red "some install step failed, rerun ·${BASH_SH}· to retry"
         exit 1
     fi
+
+    # in the foreground: package managers don't like running concurrently,
+    # and configure_zshrc appends multi-line blocks to ${ZSHRC}
+    install_shell_tools
+    configure_zshrc
 
     echo_color red "Warning: If you only execute ·${BASH_SH}·. You need ·${SOURCE_SH}· After running this shell."
     echo_color blue 'Zsh deploy finish. Now you can enjoy it💂'

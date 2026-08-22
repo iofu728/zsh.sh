@@ -12,9 +12,10 @@
 This shell include
 
 - zsh, curl, git
-- oh-my-zsh, zsh-syntax-highlighting, zsh-autosuggestions
+- oh-my-zsh, zsh-syntax-highlighting, zsh-autosuggestions, fzf-tab
 - fzf, fd
 - bat
+- atuin, zoxide, direnv, carapace
 - vimrc(support TabNine 19.7.19)
 
 <img src="https://raw.githubusercontent.com/iofu728/zsh.sh/master/demo.gif">
