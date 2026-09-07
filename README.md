@@ -13,9 +13,11 @@ This shell include
 
 - zsh, curl, git
 - oh-my-zsh, zsh-syntax-highlighting, zsh-autosuggestions
+- spaceship-prompt theme
 - fzf, fd
 - bat
-- vimrc(support TabNine 19.7.19)
+- vimrc(support TabNine 19.7.19 when vim has python support)
+- iterm2 + prefs + Monaco for Powerline font(only MacOS)
 
 <img src="https://raw.githubusercontent.com/iofu728/zsh.sh/master/demo.gif">
 

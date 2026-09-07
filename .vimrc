@@ -49,12 +49,14 @@ Plug 'fatih/vim-go', { 'tag': '*' }
 
 " Plugin options
 Plug 'nsf/gocode', { 'tag': 'v.20150303', 'rtp': 'vim' }
-Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
-Plug '~/my-prototype-plugin'
 Plug 'junegunn/goyo.vim'
 Plug 'junegunn/seoul256.vim'
 Plug 'lervag/vimtex'
-Plug 'zxqfl/tabnine-vim'
+" tabnine-vim needs vim with python support (stock macOS vim has none),
+" else it prints "YouCompleteMe unavailable" and blocks startup
+if has('python') || has('python3')
+  Plug 'zxqfl/tabnine-vim'
+endif
 Plug 'mtdl9/vim-log-highlighting'
 
 call plug#end()

@@ -3,7 +3,8 @@
 # @Date:   2019-04-30 13:26:25
 # @Last Modified time: 2026-08-13 00:00:00
 # A zsh deploy shell for ubuntu.
-# In this shell, will install zsh, oh-my-zsh, zsh-syntax-highlighting, zsh-autosuggestions, fzf, vimrc, bat
+# In this shell, will install zsh, oh-my-zsh, zsh-syntax-highlighting, zsh-autosuggestions, fzf, vimrc, bat, spaceship
+# On MacOS also iterm2 (with prefs & Monaco for Powerline font)
 
 set -e
 
@@ -63,6 +64,17 @@ VIMRC=${ZDOTDIR:-$HOME}/.vimrc
 VIMPLUG_URL='https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 VIMPLUG_P=${ZDOTDIR:-$HOME}'/.vim/autoload/plug.vim'
 VIMRC_URL='https://raw.githubusercontent.com/iofu728/zsh.sh/master/.vimrc'
+
+SPACESHIP=spaceship-prompt
+SPACESHIP_URL=https://github.com/spaceship-prompt/${SPACESHIP}
+ZSH_T=${ZSH_CUSTOM}/themes
+SPACESHIP_P=${ZSH_T}/${SPACESHIP}
+
+ITERM_PLIST_URL='https://raw.githubusercontent.com/iofu728/zsh.sh/master/iterm2/com.googlecode.iterm2.plist'
+ITERM_PREFS=${ZDOTDIR:-$HOME}/Library/Preferences/com.googlecode.iterm2.plist
+FONT_NAME='Monaco for Powerline.otf'
+FONT_URL='https://github.com/supermarin/powerline-fonts/raw/master/Monaco/Monaco%20for%20Powerline.otf'
+FONT_DIR=${ZDOTDIR:-$HOME}/Library/Fonts
 
 BASH_SH='bash zsh.sh'
 # literal on purpose: echoed back to the user as the command to run
@@ -395,6 +407,52 @@ install_vimrc() {
     fi
 }
 
+# spaceship-prompt theme
+install_spaceship() {
+    if [ ! -d "${SPACESHIP_P}" ]; then
+        echo_color yellow "${SIGN_2} ${DOW} spaceship ${SIGN_2}"
+        git clone --depth 1 ${SPACESHIP_URL} "${SPACESHIP_P}"
+    fi
+    ln -sf "${SPACESHIP_P}/spaceship.zsh-theme" "${ZSH_T}/spaceship.zsh-theme"
+    if grep -q '^ZSH_THEME=' "${ZSHRC}" 2>/dev/null; then
+        sed_i 's|^ZSH_THEME=.*|ZSH_THEME="spaceship"|' "${ZSHRC}"
+    else
+        append_zshrc 'ZSH_THEME="spaceship"'
+    fi
+}
+
+# iterm2 + prefs + Monaco for Powerline, MacOS only
+install_iterm2() {
+    if [ "${DISTRIBUTION}" != MacOS ]; then
+        return 0
+    fi
+    if [ ! -d /Applications/iTerm.app ] && [ ! -d "${ZDOTDIR:-$HOME}/Applications/iTerm.app" ]; then
+        if has brew; then
+            echo_color green "${SIGN_1} ${INS} iterm2 ${SIGN_1}"
+            brew install --cask iterm2
+        else
+            echo_color red "no brew, skip iterm2. You can install it from https://iterm2.com by hand"
+        fi
+    fi
+
+    # the bundled prefs use Monaco for Powerline; spaceship glyphs need a powerline font too
+    if ! ls "${FONT_DIR}" /Library/Fonts 2>/dev/null | grep -qi 'monaco.*powerline'; then
+        echo_color yellow "${SIGN_2} ${DOW} ${FONT_NAME} ${SIGN_2}"
+        mkdir -p "${FONT_DIR}" && fetch "${FONT_URL}" "${FONT_DIR}/${FONT_NAME}"
+    fi
+
+    if [ ! -f "${ITERM_PREFS}" ]; then
+        echo_color yellow "${SIGN_2} ${DOW} iterm2 prefs ${SIGN_2}"
+        local tmp
+        tmp=$(mktemp -t iterm2)
+        if fetch ${ITERM_PLIST_URL} "${tmp}"; then
+            defaults import com.googlecode.iterm2 "${tmp}" &&
+                echo_color yellow "iterm2 prefs imported, restart iTerm2 to apply"
+        fi
+        rm -f "${tmp}"
+    fi
+}
+
 if [ ! -d "${ZSH}" ]; then
     update_list
     check_install zsh
@@ -416,12 +474,14 @@ if [ ! -d "${ZSH}" ]; then
 else
     echo_color green "ZSH_CUSTOM: ${ZSH_CUSTOM}"
 
-    # the four installs are independent, run them in parallel;
+    # the installs are independent, run them in parallel;
     # wait for all and fail if any of them failed
     install_zsh_plugins &
     install_fd_bat &
     install_fzf &
     install_vimrc &
+    install_spaceship &
+    install_iterm2 &
 
     rc=0
     for pid in $(jobs -p); do
