@@ -432,6 +432,12 @@ install_spaceship() {
     else
         append_zshrc 'ZSH_THEME="spaceship"'
     fi
+    append_zshrc 'SPACESHIP_PROMPT_ADD_NEWLINE=false'
+    append_zshrc 'SPACESHIP_PROMPT_SEPARATE_LINE=false'
+    append_zshrc 'SPACESHIP_PROMPT_ORDER=(time user dir host git exec_time jobs exit_code char)'
+    append_zshrc 'SPACESHIP_DIR_TRUNC=3'
+    append_zshrc 'SPACESHIP_GIT_BRANCH_SHOW=true'
+    append_zshrc 'SPACESHIP_GIT_STATUS_SHOW=true'
 }
 
 # iterm2 + prefs + Monaco for Powerline, MacOS only
