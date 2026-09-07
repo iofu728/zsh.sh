@@ -402,9 +402,9 @@ install_vimrc() {
     fi
     fetch ${VIMRC_URL} "${VIMRC}"
 
-    if [ -z "${IS_DOCKER:-}" ] && [ -e /dev/tty ]; then
+    if [ -z "${IS_DOCKER:-}" ] && [ -t 0 ] && [ -t 1 ]; then
         echo_color yellow "${SIGN_2} ${INS} vim plugs ${SIGN_2}"
-        vim +'PlugInstall --sync' +qall &>/dev/null </dev/tty ||
+        vim +'PlugInstall --sync' +qall ||
             echo_color red "PlugInstall failed, run ·vim +'PlugInstall --sync' +qall· by hand"
     fi
 }
