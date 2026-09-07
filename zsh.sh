@@ -402,6 +402,13 @@ install_vimrc() {
     fi
     fetch ${VIMRC_URL} "${VIMRC}"
 
+    # Older seoul256 releases use a multi-variable unlet that Vim 9 reports as E108.
+    local seoul256
+    seoul256=${ZDOTDIR:-$HOME}/.vim/plugged/seoul256.vim/colors/seoul256.vim
+    if [ -f "${seoul256}" ]; then
+        sed_i 's/silent! unlet s:style s:seoul256_background/silent! unlet s:style\nsilent! unlet s:seoul256_background/' "${seoul256}"
+    fi
+
     if [ -z "${IS_DOCKER:-}" ] && [ -t 0 ] && [ -t 1 ]; then
         echo_color yellow "${SIGN_2} ${INS} vim plugs ${SIGN_2}"
         vim +'PlugInstall --sync' +qall ||

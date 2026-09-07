@@ -34,7 +34,9 @@ Plug '~/.fzf'
 Plug 'https://github.com/junegunn/vim-github-dashboard.git'
 
 " Multiple Plug commands can be written in a single line using | separators
-Plug 'SirVer/ultisnips' | Plug 'honza/vim-snippets'
+if has('python3')
+  Plug 'SirVer/ultisnips' | Plug 'honza/vim-snippets'
+endif
 
 " On-demand loading
 Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
@@ -49,6 +51,7 @@ Plug 'fatih/vim-go', { 'tag': '*' }
 " Plugin options
 Plug 'nsf/gocode', { 'tag': 'v.20150303', 'rtp': 'vim' }
 Plug 'junegunn/goyo.vim'
+Plug 'junegunn/seoul256.vim'
 Plug 'lervag/vimtex'
 " tabnine-vim needs vim with python support (stock macOS vim has none),
 " else it prints "YouCompleteMe unavailable" and blocks startup
@@ -65,5 +68,5 @@ let g:vimtex_quickfix_mode=0
 set conceallevel=1
 let g:tex_conceal='abdmg'
 let g:go_version_warning = 0
-set background=dark
-silent! colorscheme desert
+let g:seoul256_background = 237
+silent! colorscheme seoul256
