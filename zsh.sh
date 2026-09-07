@@ -386,13 +386,15 @@ install_fzf() {
 
 # vimrc + vim-plug
 install_vimrc() {
-    if [ -d "${VIM_P}" ] || [ "${DISTRIBUTION}" = Alpine ]; then
+    if [ "${DISTRIBUTION}" = Alpine ]; then
         return 0
     fi
-    echo_color yellow "${SIGN_2} ${DOW} vimrc ${SIGN_2}"
-    git clone --depth=1 ${VIM_URL} "${VIM_P}"
-    echo_color yellow "${SIGN_2} ${INS} vimrc ${SIGN_2}"
-    sh "${VIM_P}"/install_awesome_vimrc.sh
+    if [ ! -d "${VIM_P}" ]; then
+        echo_color yellow "${SIGN_2} ${DOW} vimrc ${SIGN_2}"
+        git clone --depth=1 ${VIM_URL} "${VIM_P}"
+        echo_color yellow "${SIGN_2} ${INS} vimrc ${SIGN_2}"
+        sh "${VIM_P}"/install_awesome_vimrc.sh
+    fi
 
     curl -fLo "${VIMPLUG_P}" --create-dirs ${VIMPLUG_URL}
     if [ -f "${VIMRC}" ]; then
